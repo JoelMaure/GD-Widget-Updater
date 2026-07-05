@@ -50,7 +50,7 @@ jobs:
           # Enviamos los datos usando la variable de entorno protegida
           curl -X PUT "https://discord.com/api/v10/users/654470361634832387/applications/1520850043882700881/role-connection" \
                -H "Content-Type: application/json" \
-               -H "Authorization: Bot $BOT_TOKEN" \
+               -H "Authorization: Bot $MTUyMDg1MDA0Mzg4MjcwMDg4MQ.GuIVXd.V9VHWkG31pG5r7C4z4acTeZ9mF1ITdq0B5sz0w" \
                -H "User-Agent: DiscordBot (https://github.com/discord/discord-api-docs, 1.0.0)" \
                -d "{
                  \"platform_username\": \"RazorLuL\",
