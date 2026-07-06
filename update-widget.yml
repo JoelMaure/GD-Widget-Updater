@@ -39,7 +39,7 @@ jobs:
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
         run: |
-          # Extraemos las variables del JSON generado por Python
+          # Corrección de jq: leemos '.user_coins' que es la clave real que genera tu script de Python
           STARS=$(jq '.stars' current_gd_stats.json)
           MOONS=$(jq '.moons' current_gd_stats.json)
           DEMONS=$(jq '.demons' current_gd_stats.json)
@@ -47,8 +47,8 @@ jobs:
           COINS=$(jq '.user_coins' current_gd_stats.json)
           EXTREME=$(jq '.extreme_demons' current_gd_stats.json)
 
-          # Enviamos los datos usando la variable de entorno protegida
-          curl -X PUT "https://discord.com/api/v10/users/654470361634832387/applications/1520850043882700881/role-connection" \
+          # Usamos el endpoint oficial universal '@me' para evitar rechazos de permisos
+          curl -X PUT "https://discord.com/api/v10/users/@me/applications/1520850043882700881/role-connection" \
                -H "Content-Type: application/json" \
                -H "Authorization: Bot $BOT_TOKEN" \
                -H "User-Agent: DiscordBot (https://github.com/discord/discord-api-docs, 1.0.0)" \
