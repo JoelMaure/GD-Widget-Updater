@@ -1,11 +1,82 @@
-{
-    "username": "RazorLuL",
-    "stars": 21151,
-    "moons": 1368,
-    "demons": 499,
-    "diamonds": 46931,
-    "user_coins": 150,
-    "extreme_demons": 3,
-    "global_rank": 9060,
-    "pfp": "https://gdbrowser.com/icon/RazorLuL"
-}
+import requests
+import json
+import sys
+import os
+
+GD_USERNAME = "RazorLuL"
+USER_ID = "654470361634832387"
+APPLICATION_ID = "1520850043882700881"
+API_URL = f"https://gdbrowser.com/api/profile/{GD_USERNAME}"
+
+def fetch_stats():
+    try:
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+        response = requests.get(API_URL, headers=headers)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error al obtener estadísticas de GDBrowser: {e}")
+        sys.exit(1)
+
+def sync_with_discord(stats):
+    bot_token = os.environ.get("BOT_TOKEN")
+    if not bot_token:
+        print("Error: No se encontró la variable de entorno BOT_TOKEN.")
+        return
+
+    # Endpoint oficial estricto para la conexión de roles de la aplicación
+    discord_url = f"https://discord.com/api/v10/users/{USER_ID}/applications/{APPLICATION_ID}/role-connection"
+    
+    headers = {
+        "Authorization": f"Bot {bot_token}",
+        "Content-Type": "application/json",
+        "User-Agent": "DiscordBot (https://github.com/discord/discord-api-docs, 1.0.0)"
+    }
+    
+    payload = {
+        "platform_username": "RazorLuL",
+        "metadata": {
+            "stars": int(stats["stars"]),
+            "moons": int(stats["moons"]),
+            "demons": int(stats["demons"]),
+            "diamonds": int(stats["diamonds"]),
+            "user_coins": int(stats["user_coins"]),
+            "extreme_demons": int(stats["extreme_demons"])
+        }
+    }
+    
+    print("Enviando actualización a Discord...")
+    response = requests.put(discord_url, headers=headers, json=payload)
+    
+    print(f"Código de respuesta de Discord: {response.status_code}")
+    try:
+        print("Respuesta de Discord:", response.json())
+    except Exception:
+        print("Respuesta de Discord:", response.text)
+
+def main():
+    data = fetch_stats()
+    
+    stats_data = {
+        "username": data.get("username", GD_USERNAME),
+        "stars": data.get("stars", 0),
+        "moons": data.get("moons", 0),
+        "demons": data.get("demons", 0),
+        "diamonds": data.get("diamonds", 0),
+        "user_coins": data.get("coins", data.get("userCoins", 0)), 
+        "extreme_demons": data.get("extremeDemons", 3), 
+        "global_rank": data.get("rank", 0),
+        "pfp": f"https://gdbrowser.com/icon/{GD_USERNAME}"
+    }
+
+    # Guardar localmente en el repositorio
+    with open("current_gd_stats.json", "w", encoding="utf-8") as f:
+        json.dump(stats_data, f, indent=4)
+        
+    print("¡Archivo JSON local actualizado con éxito!")
+    
+    # Ejecutar la sincronización nativa por HTTP
+    sync_with_discord(stats_data)
+
+if __name__ == "__main__":
+    main()
