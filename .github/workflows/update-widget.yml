@@ -2,15 +2,14 @@ name: Actualizar GD Discord Widget
 
 on:
   schedule:
-    # Cron: Ejecutar a cada hora en punto (minuto 0)
     - cron: '0 * * * *'
-  workflow_dispatch: # Permite ejecutar la acción manualmente mediante un botón
+  workflow_dispatch:
 
 jobs:
   update-widget:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Requerido para hacer push
+      contents: write
       
     steps:
       - name: Clonar repositorio
@@ -34,5 +33,33 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add current_gd_stats.json
-          # Comprueba si hay cambios antes de comitear
           git diff --quiet && git diff --staged --quiet || (git commit -m "chore: actualización automática de stats GD" && git push)
+
+      - name: Sincronizar dinámicamente con Discord
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: |
+          # Extraemos las variables del JSON generado por tu Python
+          STARS=$(jq '.stars' current_gd_stats.json)
+          MOONS=$(jq '.moons' current_gd_stats.json)
+          DEMONS=$(jq '.demons' current_gd_stats.json)
+          DIAMONDS=$(jq '.diamonds' current_gd_stats.json)
+          COINS=$(jq '.user_coins' current_gd_stats.json)
+          EXTREME=$(jq '.extreme_demons' current_gd_stats.json)
+
+          # Enviamos los datos usando la variable protegida al endpoint @me
+          curl -X PUT "https://discord.com/api/v10/users/@me/applications/1520850043882700881/role-connection" \
+               -H "Content-Type: application/json" \
+               -H "Authorization: Bot $BOT_TOKEN" \
+               -H "User-Agent: DiscordBot (https://github.com/discord/discord-api-docs, 1.0.0)" \
+               -d "{
+                 \"platform_username\": \"RazorLuL\",
+                 \"metadata\": {
+                   \"stars\": $STARS,
+                   \"moons\": $MOONS,
+                   \"demons\": $DEMONS,
+                   \"diamonds\": $DIAMONDS,
+                   \"user_coins\": $COINS,
+                   \"extreme_demons\": $EXTREME
+                 }
+               }"
